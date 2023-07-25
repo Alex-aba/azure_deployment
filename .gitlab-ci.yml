@@ -1,0 +1,97 @@
+image: gradle:alpine
+image: openjdk:17.0.2
+image: node:latest
+
+services:
+  - docker:22.06-rc-cli
+
+
+stages:
+  - copyright
+  - build
+  - test
+  - quality gate
+  - build and push docker image
+  - deploy
+
+
+cache:
+  key: "$CI_COMMIT_REF_NAME"
+  policy: pull
+  paths:
+    - .gradle/wrapper
+    - .gradle/caches
+
+build:
+  tags: 
+    - mac
+  stage: build
+  script: ./gradlew build
+  only:
+    - merge_requests
+    - develop
+    - master
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+    paths:
+      - build
+      - .gradle
+
+test:
+  tags: 
+    - mac
+  stage: test
+  script: ./gradlew check
+  only:
+    - merge_requests
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - build
+      - .gradle
+
+docker build:
+  image: docker:rc-dind
+  when: manual
+  stage: build and push docker image
+  tags: 
+    - mac
+  only:
+    - develop
+    - master
+  script:
+    # - ./gradlew wrapper --gradle-version 7.5 for Windows
+    - docker build --build-arg SPRING_ACTIVE_PROFILE=$SPRING_ACTIVE_PROFILE -t $DOCKER_REPO .
+    - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD docker.io
+    - docker push $DOCKER_REPO
+  environment:
+    name: $CI_COMMIT_REF_NAME
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - build
+      - .gradle
+
+deploy:
+  image: ubuntu:latest
+  when: manual
+  stage: deploy
+  only:
+    - develop
+    - master
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+  tags: 
+    - mac
+  script:
+    - ssh $SERVER_USER@$SERVER_IP "docker login -u $DOCKER_USER -p $DOCKER_PASSWORD docker.io; docker stop $APP_NAME; docker system prune -a -f; docker pull $DOCKER_REPO; docker container run -d --name $APP_NAME --network $APP_NAME --network-alias $APP_NAME -p $PORT:$PORT -v $SERVER_VOLUME:$DOCKER_VOLUME -e SPRING_ACTIVE_PROFILE=$SPRING_ACTIVE_PROFILE --env-file $ENV_FILE $DOCKER_REPO; docker logout"
+  environment:
+    name: $CI_COMMIT_REF_NAME
