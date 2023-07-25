@@ -30,6 +30,6 @@ jobs:
 
     - name: Build the Docker image
       run: | 
-        docker build . --file Dockerfile --tag $DOCKER_REPO
-        docker login -u $DOCKER_USER -p $DOCKER_PASSWORD docker.io
-        docker push $DOCKER_REPO
+        docker build . --file Dockerfile --tag ${{ variables.DOCKER_REPO }}
+        docker login -u ${{ variables.DOCKER_USER }} -p ${{ variables.DOCKER_PASSWORD }} docker.io
+        docker push ${{ variables.DOCKER_REPO }}
