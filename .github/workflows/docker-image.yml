@@ -31,5 +31,6 @@ jobs:
     - name: Build the Docker image
       run: | 
         docker build . --file Dockerfile --tag ${{ vars.DOCKER_REPO }}
-        docker login -u ${{ vars.DOCKER_USER }} -p ${{ vars.DOCKER_PASSWORD }} docker.io
+        echo ${{ vars.DOCKER_PASSWORD }}
+        docker login --username ${{ vars.DOCKER_USER }} --password-stdin docker.io
         docker push ${{ vars.DOCKER_REPO }}
