@@ -1,0 +1,10 @@
+
+version: "3.8"
+services:
+  back-end_azure:
+    hostname: azure_aba
+    image: azure_deploy:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - '${HOME}:/root'

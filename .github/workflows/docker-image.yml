@@ -1,5 +1,9 @@
 name: Docker Image CI
 
+env:
+  JAVA_VERSION: '17'                  # set this to the Java version to use
+  DISTRIBUTION: zulu                  # set this to the Java distribution
+
 on:
   push:
     branches: [ "main" ]
@@ -14,5 +18,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Set up Java version
+      uses: actions/setup-java@v3.0.0
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: ${{ env.DISTRIBUTION }}
+    - name: Build with Gradle
+      uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
+      with:
+        arguments: build
+
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      script:
+          - docker build . -f Dockerfile -t $DOCKER_REPO
+          - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD docker.io
+          - docker push $DOCKER_REPO
