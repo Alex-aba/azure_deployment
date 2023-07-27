@@ -1,3 +1,12 @@
+
+# 1) Login to Azure
+# 2) Create Web App with docker container
+# 3) Add docker credentials and image info
+# 4) Go to deployment center and add settings to connect to GitHub repo
+# 5) Select to use your own ci-cd file or  give this responsibility to azure to create ci-cd file.
+
+
+
 name: Docker Image CI
 
 env:

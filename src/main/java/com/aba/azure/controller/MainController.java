@@ -14,11 +14,11 @@ public class MainController {
 
  @GetMapping(value = "/morning")
  public String getString(){
-  return "Good Morning from" + greetings + "!!!!!" ;
+  return "Good Morning GitHub from " + greetings + "!!!!!" ;
  }
 
  @GetMapping(value = "/evening")
  public String getStringEvening(){
-  return "Good Evening from" + greetings + "!!!!!";
+  return "Good Evening GitHub from " + greetings + "!!!!!";
  }
 }
