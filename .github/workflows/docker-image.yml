@@ -33,3 +33,76 @@ jobs:
         docker build . --file Dockerfile --tag ${{ vars.DOCKER_REPO }}
         docker login --username ${{ vars.DOCKER_USER }} --password ${{ vars.DOCKER_PASSWORD }} docker.io
         docker push ${{ vars.DOCKER_REPO }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'b2r'
+          slot-name: 'production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_0CDCC2DD6EBA413C819B455BA4E354A3 }}
+          images: 'index.docker.io/${{ vars.DOCKER_REPO }}'
+
+
+
+
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+#name: Build and deploy container app to Azure Web App - b2r
+#
+#on:
+#  push:
+#    branches:
+#      - main
+#  workflow_dispatch:
+#
+#jobs:
+#  build:
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - uses: actions/checkout@v2
+#
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v2
+#
+#      - name: Log in to container registry
+#        uses: docker/login-action@v2
+#        with:
+#          registry: https://index.docker.io/v1/
+#          username: ${{ secrets.AzureAppService_ContainerUsername_ac29ff6d0bce4facac95cc595ac125a7 }}
+#          password: ${{ secrets.AzureAppService_ContainerPassword_03c2fb8e0df843da9216b6240c93e03f }}
+#
+#      - name: Build and push container image to registry
+#        uses: docker/build-push-action@v3
+#        with:
+#          context: .
+#          push: true
+#          tags: index.docker.io/${{ secrets.AzureAppService_ContainerUsername_ac29ff6d0bce4facac95cc595ac125a7 }}/obartkov/aba:${{ github.sha }}
+#          file: ./Dockerfile
+
+#    deploy:
+#      runs-on: ubuntu-latest
+#      needs: build
+#      environment:
+#        name: 'production'
+#        url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+#
+#      steps:
+#        - name: Deploy to Azure Web App
+#          id: deploy-to-webapp
+#          uses: azure/webapps-deploy@v2
+#          with:
+#            app-name: 'b2r'
+#            slot-name: 'production'
+#            publish-profile: ${{ secrets.AzureAppService_PublishProfile_9ede860e9aa44b49a8e20d1d7f72e2af }}
+#            images: 'index.docker.io/${{ secrets.AzureAppService_ContainerUsername_ac29ff6d0bce4facac95cc595ac125a7 }}/obartkov/aba:${{ github.sha }}'
